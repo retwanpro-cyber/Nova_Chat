@@ -1,0 +1,77 @@
+<resources>
+    <string name="app_name">NOVA Chat</string>
+    <string name="app_short_name">NOVA</string>
+    <string name="app_slogan">Connect. Share. Flow.</string>
+    <string name="developer_name">Radwan Almsora</string>
+    <string name="developer_title">Lead Mobile Architect</string>
+    <string name="copyright">© 2026 Radwan Almsora. All rights reserved.</string>
+    
+    <!-- Navigation Tabs -->
+    <string name="tab_chats">Chats</string>
+    <string name="tab_calls">Calls</string>
+    <string name="tab_spaces">Spaces</string>
+    <string name="tab_me">Me</string>
+    
+    <!-- Filter Tabs -->
+    <string name="filter_all">All</string>
+    <string name="filter_unread">Unread</string>
+    <string name="filter_groups">Groups</string>
+    <string name="filter_missed">Missed</string>
+    
+    <!-- Auth & Onboarding -->
+    <string name="welcome_to_nova">Welcome to NOVA</string>
+    <string name="continue_phone">Continue with Phone</string>
+    <string name="continue_google">Continue with Google</string>
+    <string name="continue_email">Continue with Email</string>
+    <string name="continue_apple">Continue with Apple</string>
+    <string name="already_have_account">Already have an account? Log in</string>
+    <string name="terms_privacy">Terms &amp; Privacy Policy</string>
+    <string name="create_account">Create your account</string>
+    <string name="verify_number">Verify your number</string>
+    <string name="otp_sent_to">We sent a 6-digit code to:</string>
+    <string name="verify_btn">Verify</string>
+    <string name="resend_code">Resend code</string>
+    <string name="whats_your_name">What\'s your name?</string>
+    <string name="add_profile_photo">Add profile photo</string>
+    <string name="you_are_ready">You\'re ready!</string>
+    <string name="onboarding_desc">Find your friends. Create spaces. Start chatting.</string>
+    <string name="enter_nova">Enter NOVA</string>
+    
+    <!-- Chat Screen -->
+    <string name="type_message">Type a message...</string>
+    <string name="recording">Recording...</string>
+    <string name="voice_message">Voice message</string>
+    <string name="online">Online</string>
+    <string name="typing">typing...</string>
+    
+    <!-- Message Actions -->
+    <string name="action_reply">Reply</string>
+    <string name="action_react">React</string>
+    <string name="action_forward">Forward</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_save">Save</string>
+    <string name="action_pin">Pin</string>
+    <string name="action_remind">Remind me</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_select">Select</string>
+    <string name="disappearing_timer">Disappearing Timer</string>
+    
+    <!-- Remind Me Options -->
+    <string name="remind_10_min">In 10 minutes</string>
+    <string name="remind_1_hour">In 1 hour</string>
+    <string name="remind_tomorrow">Tomorrow</string>
+    <string name="remind_choose_date">Choose date</string>
+    
+    <!-- Settings & Appearance -->
+    <string name="settings">Settings</string>
+    <string name="appearance">Appearance</string>
+    <string name="privacy">Privacy</string>
+    <string name="security">Security</string>
+    <string name="notifications">Notifications</string>
+    <string name="data_storage">Data &amp; Storage</string>
+    <string name="language">Language</string>
+    <string name="about_nova">About NOVA</string>
+    <string name="saved_messages">Saved Messages</string>
+    <string name="my_qr_code">My QR Code</string>
+</resources>

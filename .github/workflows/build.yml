@@ -1,0 +1,81 @@
+name: Build Nova Chat
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant Execute Permission for Gradlew
+        run: |
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+          elif [ -f "NovaChat/gradlew" ]; then
+            chmod +x NovaChat/gradlew
+          fi
+
+      - name: Build Debug APK
+        run: |
+          if [ -f "gradlew" ]; then
+            ./gradlew assembleDebug --stacktrace
+          else
+            cd NovaChat && ./gradlew assembleDebug --stacktrace
+          fi
+
+      - name: Build Release APK & AAB
+        run: |
+          if [ -f "gradlew" ]; then
+            ./gradlew assembleRelease --stacktrace
+            ./gradlew bundleRelease --stacktrace
+          else
+            cd NovaChat && ./gradlew assembleRelease --stacktrace && ./gradlew bundleRelease --stacktrace
+          fi
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOVA-Chat-Debug-APK
+          path: "**/build/outputs/apk/debug/*.apk"
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOVA-Chat-Release-APK
+          path: "**/build/outputs/apk/release/*.apk"
+
+      - name: Upload Release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOVA-Chat-Release-AAB
+          path: "**/build/outputs/bundle/release/*.aab"
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            **/build/outputs/apk/release/*.apk
+            **/build/outputs/bundle/release/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
