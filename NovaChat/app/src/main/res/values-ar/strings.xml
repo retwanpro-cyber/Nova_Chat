@@ -1,77 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NOVA Chat</string>
-    <string name="app_short_name">نوفا</string>
-    <string name="app_slogan">Connect. Share. Flow.</string>
-    <string name="developer_name">رضوان المسوري (Radwan Almsora)</string>
-    <string name="developer_title">مطور وقائد بنية تطبيقات الأندرويد</string>
-    <string name="copyright">© 2026 جميع الحقوق محفوظة للمطور رضوان المسوري</string>
-    
-    <!-- Navigation Tabs -->
-    <string name="tab_chats">المحادثات</string>
-    <string name="tab_calls">المكالمات</string>
-    <string name="tab_spaces">المساحات</string>
-    <string name="tab_me">حسابي</string>
-    
-    <!-- Filter Tabs -->
-    <string name="filter_all">الكل</string>
-    <string name="filter_unread">غير مقروء</string>
-    <string name="filter_groups">المجموعات</string>
-    <string name="filter_missed">الفائتة</string>
-    
-    <!-- Auth & Onboarding -->
-    <string name="welcome_to_nova">مرحباً بك في NOVA</string>
-    <string name="continue_phone">المتابعة برقم الهاتف</string>
-    <string name="continue_google">المتابعة باستخدام Google</string>
-    <string name="continue_email">المتابعة بالبريد الإلكتروني</string>
-    <string name="continue_apple">المتابعة باستخدام Apple</string>
-    <string name="already_have_account">لديك حساب بالفعل؟ تسجيل الدخول</string>
-    <string name="terms_privacy">شروط الخدمة وسياسة الخصوصية</string>
-    <string name="create_account">إنشاء حساب جديد</string>
-    <string name="verify_number">تأكيد رقم هاتفك</string>
-    <string name="otp_sent_to">أرسلنا رمز التحقق المكون من 6 أرقام إلى:</string>
-    <string name="verify_btn">تأكيد ومتابعة</string>
-    <string name="resend_code">إعادة إرسال الرمز</string>
-    <string name="whats_your_name">ما هو اسمك؟</string>
-    <string name="add_profile_photo">إضافة صورة شخصية</string>
-    <string name="you_are_ready">أنت جاهز تماماً!</string>
-    <string name="onboarding_desc">ابحث عن أصدقائك، وأنشئ المساحات، وابدأ الدردشة.</string>
-    <string name="enter_nova">الدخول إلى NOVA</string>
-    
+    <string name="app_name">نوفا شات</string>
+
+    <!-- Navigation & Main Screen -->
+    <string name="chats_title">نوفا شات</string>
+    <string name="new_chat">محادثة جديدة</string>
+    <string name="search_hint">البحث في المحادثات أو المستخدمين...</string>
+    <string name="no_chats_found">لا توجد محادثات بعد</string>
+    <string name="start_chat_prompt">اضغط على الزر بالأسفل لبدء محادثة جديدة</string>
+    <string name="selected_count">تم تحديد %1$d</string>
+    <string name="delete_chats">حذف</string>
+    <string name="delete_confirm_title">حذف المحادثة؟</string>
+    <string name="delete_confirm_message">هل أنت متأكد من رغبتك في حذف المحادثة المحددة؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="cancel">إلغاء</string>
+    <string name="delete">حذف</string>
+
     <!-- Chat Screen -->
     <string name="type_message">اكتب رسالة...</string>
-    <string name="recording">جارٍ التسجيل...</string>
-    <string name="voice_message">رسالة صوتية</string>
+    <string name="send">إرسال</string>
     <string name="online">متصل الآن</string>
-    <string name="typing">يكتب الآن...</string>
-    
-    <!-- Message Actions -->
+    <string name="offline">غير متصل</string>
+    <string name="today">اليوم</string>
+    <string name="yesterday">أمس</string>
+    <string name="empty_chat">قل مرحباً وابدأ المحادثة الآن!</string>
+
+    <!-- Message Actions BottomSheet -->
     <string name="action_reply">رد</string>
-    <string name="action_react">تفاعل</string>
+    <string name="action_remind">تذكيري</string>
+    <string name="action_pin">تثبيت الرسالة</string>
+    <string name="action_save">حفظ الرسالة</string>
+    <string name="action_copy">نسخ النص</string>
     <string name="action_forward">إعادة توجيه</string>
-    <string name="action_copy">نسخ</string>
-    <string name="action_save">حفظ</string>
-    <string name="action_pin">تثبيت</string>
-    <string name="action_remind">ذكرني</string>
-    <string name="action_edit">تعديل</string>
-    <string name="action_delete">حذف</string>
-    <string name="action_select">تحديد</string>
-    <string name="disappearing_timer">الرسائل المؤقتة</string>
-    
-    <!-- Remind Me Options -->
-    <string name="remind_10_min">خلال 10 دقائق</string>
-    <string name="remind_1_hour">خلال ساعة</string>
-    <string name="remind_tomorrow">غداً صباحاً</string>
-    <string name="remind_choose_date">تحديد وقت مخصص</string>
-    
-    <!-- Settings & Appearance -->
-    <string name="settings">الإعدادات</string>
-    <string name="appearance">المظهر والتخصيص</string>
-    <string name="privacy">الخصوصية</string>
-    <string name="security">الأمان</string>
+    <string name="action_delete">حذف الرسالة</string>
+    <string name="remind_10_min">بعد 10 دقائق</string>
+    <string name="remind_1_hour">بعد ساعة</string>
+    <string name="remind_tomorrow">غداً</string>
+
+    <!-- About Screen -->
+    <string name="about_nova">حول نوفا</string>
+    <string name="app_slogan">الجيل القادم من المراسلة الآمنة</string>
+    <string name="copyright">© 2026 نوفا شات. جميع الحقوق محفوظة.</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="profile_section">الملف الشخصي</string>
+    <string name="role_admin">مسؤول النظام</string>
+    <string name="role_user">مستخدم</string>
+    <string name="app_language">لغة التطبيق</string>
+    <string name="language_system">افتراضي النظام (تلقائي)</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_english">English (الإنجليزية)</string>
     <string name="notifications">الإشعارات</string>
-    <string name="data_storage">البيانات والتخزين</string>
-    <string name="language">اللغة / Language</string>
-    <string name="about_nova">حول تطبيق NOVA</string>
-    <string name="saved_messages">الرسائل المحفوظة</string>
-    <string name="my_qr_code">رمز QR الخاص بي</string>
+    <string name="notifications_desc">تلقي تنبيهات عند وصول رسائل جديدة</string>
+    <string name="dark_mode">الوضع الليلي</string>
+    <string name="dark_mode_desc">المظهر الداكن المريح للعين</string>
+    <string name="privacy_e2ee">التشفير التام (E2EE)</string>
+    <string name="privacy_desc">جميع الرسائل مشفرة وخاصة بالكامل</string>
+    <string name="storage_cache">التخزين والذاكرة المؤقتة</string>
+    <string name="clear_cache">مسح الذاكرة المؤقتة</string>
+    <string name="cache_cleared">تم مسح الكاش بنجاح</string>
+    <string name="developer_contact">تواصل مع المطور</string>
+    <string name="email_label">البريد الإلكتروني: retwan.tech@gmail.com</string>
+    <string name="facebook_label">فيسبوك: Ridwan Almasouri</string>
+    <string name="app_version">الإصدار 1.0.0 (نسخة متجر APKPure)</string>
+    <string name="logout">تسجيل الخروج</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">رسائل نوفا شات</string>
+    <string name="notification_channel_desc">تنبيهات فورية بالرسائل الواردة</string>
+    <string name="new_message_notification">لديك رسالة جديدة</string>
+    <string name="appearance">المظهر</string>
 </resources>

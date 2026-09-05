@@ -1,6 +1,10 @@
 package com.radwan.nova.data.local.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import com.radwan.nova.data.local.entities.MessageEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -21,3 +25,4 @@ interface MessageDao {
     @Query("DELETE FROM messages WHERE id = :messageId")
     suspend fun deleteMessageById(messageId: String)
 }
+

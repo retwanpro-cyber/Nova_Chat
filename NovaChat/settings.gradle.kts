@@ -12,6 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-
-rootProject.name = "NOVA Chat"
+rootProject.name = "NovaChat"
 include(":app")
