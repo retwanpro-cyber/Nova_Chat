@@ -1,0 +1,1 @@
+Lightweight open-source messaging application for Android.
