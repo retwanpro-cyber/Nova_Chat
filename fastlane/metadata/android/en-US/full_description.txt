@@ -1,0 +1,1 @@
+Nova Chat is a lightweight, fully open-source messaging application designed for Android devices. Built with privacy and performance in mind, it provides a clean user experience completely free of tracking frameworks and proprietary dependencies.
