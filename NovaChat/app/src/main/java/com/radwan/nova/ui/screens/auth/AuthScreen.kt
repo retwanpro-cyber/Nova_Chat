@@ -196,7 +196,7 @@ fun AuthScreen(
                                     this.email = email.trim()
                                     this.password = password.trim()
                                 }
-                                val userId = SupabaseManager.auth.currentUserOrNull()?.id
+                                val userId = SupabaseManager.auth.currentUserOrNull()?.id ?: SupabaseManager.auth.currentSessionOrNull()?.user?.id
                                 if (userId != null) {
                                     val profile = RemoteProfile(
                                         id = userId,
@@ -205,7 +205,7 @@ fun AuthScreen(
                                         bio = "Hey there! I am using NOVA Chat.",
                                         is_online = true
                                     )
-                                    SupabaseManager.postgrest.from("profiles").insert(profile)
+                                    try { SupabaseManager.postgrest.from("profiles").upsert(profile) } catch (e: Exception) { e.printStackTrace() }
                                 }
                                 onAuthSuccess()
                             } else {

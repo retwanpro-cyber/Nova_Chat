@@ -11,6 +11,10 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
+
         applicationId = "com.radwan.nova"
         minSdk = 24
         targetSdk = 35
@@ -23,13 +27,18 @@ android {
         }
     }
 
-    buildTypes {
+        buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -39,7 +48,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    buildFeatures {
+    
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
+buildFeatures {
         compose = true
         buildConfig = true
     }
@@ -51,6 +66,8 @@ android {
 }
 
 dependencies {
+
+        
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

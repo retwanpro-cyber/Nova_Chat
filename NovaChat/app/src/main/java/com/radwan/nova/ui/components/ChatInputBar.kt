@@ -1,5 +1,7 @@
 package com.radwan.nova.ui.components
 
+import com.radwan.nova.data.local.LanguageManager
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape

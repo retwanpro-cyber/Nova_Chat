@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NOVA Chat</string>
+
+    <!-- Navigation & Main Screen -->
+    <string name="chats_title">NOVA Chat</string>
+    <string name="new_chat">New Chat</string>
+    <string name="search_hint">Search conversations or users...</string>
+    <string name="no_chats_found">No conversations yet</string>
+    <string name="start_chat_prompt">Tap the button below to start a new chat</string>
+    <string name="selected_count">%1$d selected</string>
+    <string name="delete_chats">Delete</string>
+    <string name="delete_confirm_title">Delete Conversation?</string>
+    <string name="delete_confirm_message">Are you sure you want to delete the selected conversation(s)? This cannot be undone.</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+
+    <!-- Chat Screen -->
+    <string name="type_message">Type a message...</string>
+    <string name="send">Send</string>
+    <string name="online">Online</string>
+    <string name="offline">Offline</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="empty_chat">Say hello and start the conversation!</string>
+
+    <!-- Message Actions BottomSheet -->
+    <string name="action_reply">Reply</string>
+    <string name="action_remind">Remind me</string>
+    <string name="action_pin">Pin message</string>
+    <string name="action_save">Save message</string>
+    <string name="action_copy">Copy text</string>
+    <string name="action_forward">Forward</string>
+    <string name="action_delete">Delete message</string>
+    <string name="remind_10_min">In 10 minutes</string>
+    <string name="remind_1_hour">In 1 hour</string>
+    <string name="remind_tomorrow">Tomorrow</string>
+
+    <!-- About Screen -->
+    <string name="about_nova">About NOVA</string>
+    <string name="app_slogan">Next Generation Secure Messaging</string>
+    <string name="copyright">© 2026 NOVA Chat. All rights reserved.</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="profile_section">Profile</string>
+    <string name="role_admin">Administrator</string>
+    <string name="role_user">User</string>
+    <string name="app_language">App Language</string>
+    <string name="language_system">System Default</string>
+    <string name="language_arabic">العربية (Arabic)</string>
+    <string name="language_english">English</string>
+    <string name="notifications">Notifications</string>
+    <string name="notifications_desc">Receive alerts for new messages</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="dark_mode_desc">Midnight navy theme</string>
+    <string name="privacy_e2ee">End-to-End Encryption (E2EE)</string>
+    <string name="privacy_desc">All messages are encrypted and private</string>
+    <string name="storage_cache">Storage &amp; Cache</string>
+    <string name="clear_cache">Clear Cache</string>
+    <string name="cache_cleared">Cache cleared successfully</string>
+    <string name="developer_contact">Developer Contact</string>
+    <string name="email_label">Email: retwan.tech@gmail.com</string>
+    <string name="facebook_label">Facebook: Ridwan Almasouri</string>
+    <string name="app_version">Version 1.0.0 (APKPure Edition)</string>
+    <string name="logout">Sign Out</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">NOVA Chat Messages</string>
+    <string name="notification_channel_desc">Alerts for incoming chat messages</string>
+    <string name="new_message_notification">You have a new message</string>
+    <string name="appearance">Appearance</string>
+
+    <!-- Settings & Dialogs -->
+    <string name="preferences_privacy">Preferences &amp; Privacy</string>
+    <string name="push_notifications">Push Notifications</string>
+    <string name="privacy_security">Privacy, Security &amp; Encryption</string>
+    <string name="storage_data">Storage &amp; Data</string>
+    <string name="contact_developer">Contact Developer</string>
+    <string name="email_contact">Email</string>
+    <string name="no_email_app">No email app found</string>
+    <string name="facebook_contact">Facebook</string>
+    <string name="link_open_failed">Failed to open link</string>
+    <string name="close">Close</string>
+
+    <!-- Privacy & Security Dialog -->
+    <string name="privacy_security_title">Privacy &amp; Security</string>
+    <string name="privacy_security_desc">Your chats are automatically end-to-end encrypted (E2EE).</string>
+    <string name="lock_app_title">Lock app with fingerprint / PIN</string>
+    <string name="lock_enabled_toast">App lock enabled successfully</string>
+    <string name="lock_disabled_toast">App lock disabled</string>
+    <string name="hide_online_status">Hide online status and last seen</string>
+    <string name="read_receipts">Read receipts (checkmarks)</string>
+    <string name="e2ee_active_unlocked">E2EE Encrypted • Unlocked</string>
+    <string name="e2ee_active_locked">Locked (App Lock)</string>
+
+    <!-- Storage & Data Dialog -->
+    <string name="storage_data_title">Storage &amp; Data</string>
+    <string name="cache_memory">Cache Memory</string>
+    <string name="clear_cache_action">Clear Cache</string>
+    <string name="cache_cleared_toast">Cache cleared successfully</string>
+    <string name="auto_download_media">Auto-download media</string>
+    <string name="download_wifi">Auto-download over Wi-Fi</string>
+    <string name="download_mobile">Auto-download over mobile data</string>
+    <string name="data_saver_mode">Data saver mode</string>
+    <string name="cache_prefix_label">Cache: </string>
+    <string name="more_options">More options</string>
+
+</resources>

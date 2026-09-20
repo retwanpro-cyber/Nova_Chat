@@ -21,6 +21,42 @@ import java.util.UUID
 
 class ChatViewModel : ViewModel() {
 
+    private fun parseToLocalTime(raw: String?): String {
+        if (raw.isNullOrBlank()) return ""
+        val str = raw.trim()
+        return try {
+            val parsers = listOf(
+                "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ssXXX",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss"
+            )
+            var parsedDate: java.util.Date? = null
+            for (p in parsers) {
+                try {
+                    val sdf = java.text.SimpleDateFormat(p, java.util.Locale.US)
+                    if (str.contains("+") || str.contains("Z")) {
+                        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    }
+                    val d = sdf.parse(str)
+                    if (d != null) {
+                        parsedDate = d
+                        break
+                    }
+                } catch (e: Exception) {}
+            }
+            val target = parsedDate ?: java.util.Date()
+            val outSdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+            outSdf.timeZone = java.util.TimeZone.getDefault()
+            outSdf.format(target)
+        } catch (e: Exception) {
+            val outSdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+            outSdf.format(java.util.Date())
+        }
+    }
+
+
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
@@ -110,10 +146,34 @@ class ChatViewModel : ViewModel() {
                     senderId = r.sender_id ?: "",
                     senderName = r.sender_name ?: "مستخدم",
                     text = r.text,
-                    timestamp = r.created_at ?: ""
+                    timestamp = parseToLocalTime(r.created_at),
+                    isRead = r.is_read
                 )
             }
+
             _messages.value = mapped
+
+            // تحديث حالة القراءة للرسائل الواردة من الطرف الآخر
+            val myId = SupabaseManager.auth.currentUserOrNull()?.id
+            val hasUnreadFromOther = remoteList.any { it.sender_id != myId && !it.is_read }
+            if (hasUnreadFromOther && myId != null) {
+                viewModelScope.launch {
+                    try {
+                        SupabaseManager.postgrest["messages"].update(
+                            mapOf("is_read" to true)
+                        ) {
+                            filter {
+                                eq("chat_id", roomId)
+                                neq("sender_id", myId)
+                                eq("is_read", false)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -133,7 +193,7 @@ class ChatViewModel : ViewModel() {
         }
 
         val newMsgId = UUID.randomUUID().toString()
-        val currentTimeStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        val currentTimeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
 
         val newMsg = Message(
             id = newMsgId,

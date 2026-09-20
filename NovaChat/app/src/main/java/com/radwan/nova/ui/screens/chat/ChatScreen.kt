@@ -1,8 +1,40 @@
 package com.radwan.nova.ui.screens.chat
 
+import com.radwan.nova.ui.components.EmojiPickerView
+
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.PaddingValues
+
+
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
+import androidx.compose.material.icons.filled.Mood
+
+
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Close
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.platform.LocalContext
+import com.radwan.nova.utils.AudioHelper
+import java.io.File
+import kotlinx.coroutines.delay
+import android.Manifest
+
+
+import com.radwan.nova.data.local.LanguageManager
+
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +56,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.EnhancedEncryption
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
@@ -33,6 +73,9 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +99,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +110,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.radwan.nova.data.remote.RemoteProfile
@@ -118,19 +163,85 @@ private fun parseMessageTime(ts: String?): Long {
     }
 }
 
+
+fun parseImageModel(data: String?): Any? {
+    if (data.isNullOrBlank()) return null
+    return if (data.startsWith("data:image") && data.contains(",")) {
+        try {
+            val base64Str = data.substringAfter(",")
+            android.util.Base64.decode(base64Str, android.util.Base64.DEFAULT)
+        } catch (e: Exception) {
+            data
+        }
+    } else {
+        data
+    }
+}
+
+fun formatDisplayTime(raw: String?): String {
+    val fallback = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date())
+    if (raw.isNullOrBlank()) return fallback
+    val str = raw.trim().replace("\"", "")
+    try {
+        val millis = str.toLongOrNull()
+        if (millis != null && millis > 1000000000L) {
+            val sdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+            sdf.timeZone = java.util.TimeZone.getDefault()
+            return sdf.format(java.util.Date(millis))
+        }
+    } catch (e: Exception) {}
+    return fallback
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     chatId: String,
     chatTitle: String,
     onBackClick: () -> Unit = {},
+    
     viewModel: ChatViewModel = viewModel()
 ) {
-    val context = LocalContext.current
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+        val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val allMessages by viewModel.messages.collectAsState()
     val isOtherOnline by viewModel.otherUserOnline.collectAsState()
+    var isEmojiPickerVisible by remember { mutableStateOf(false) }
     var messageText by remember { mutableStateOf("") }
+
+    var isRecording by remember { mutableStateOf(false) }
+    var recordDuration by remember { mutableIntStateOf(0) }
+    var currentAudioFile by remember { mutableStateOf<File?>(null) }
+    var currentlyPlayingUrl by remember { mutableStateOf<String?>(null) }
+    
+
+    val audioPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val audioFile = File(context.cacheDir, "voice_${System.currentTimeMillis()}.m4a")
+            currentAudioFile = audioFile
+            if (AudioHelper.startRecording(context, audioFile)) {
+                isRecording = true
+                recordDuration = 0
+            } else {
+                Toast.makeText(context, "تم مسح المحادثة", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "تم مسح المحادثة", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            while (isRecording) {
+                delay(1000)
+                recordDuration++
+            }
+        }
+    }
+
     val listState = rememberLazyListState()
     val currentUserId = SupabaseManager.auth.currentUserOrNull()?.id ?: ""
 
@@ -148,7 +259,7 @@ fun ChatScreen(
 
     // تصفية الرسائل بحيث لا تظهر الرسائل الممسوحة سابقاً
     val displayedMessages = remember(allMessages, lastClearedTime) {
-        if (lastClearedTime == 0L) {
+        val visible = if (lastClearedTime == 0L) {
             allMessages
         } else {
             allMessages.filter { msg ->
@@ -156,6 +267,7 @@ fun ChatScreen(
                 time == 0L || time > lastClearedTime
             }
         }
+        visible.filter { it.text?.startsWith("[CALL_") != true }
     }
 
     LaunchedEffect(chatId) {
@@ -187,35 +299,65 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = chatTitle,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            if (isBlocked) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Surface(
-                                    color = Color(0xFFEF4444).copy(alpha = 0.2f),
-                                    shape = RoundedCornerShape(4.dp)
-                                ) {
-                                    Text(
-                                        text = "محظور",
-                                        color = Color(0xFFEF4444),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { showProfileDialog = true }
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(38.dp),
+                            shape = CircleShape,
+                            color = Color(0xFF2563EB)
+                        ) {
+                            val avatarModel = parseImageModel(otherUserProfile?.avatar_url)
+                            if (avatarModel != null) {
+                                AsyncImage(
+                                    model = avatarModel,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.padding(6.dp)
+                                )
                             }
                         }
-                        Text(
-                            text = if (isBlocked) "تم حظر هذا المستخدم" else if (isOtherOnline) "متصل الآن" else "غير متصل",
-                            fontSize = 11.sp,
-                            color = if (isBlocked) Color(0xFFEF4444) else if (isOtherOnline) Color(0xFF10B981) else Color.LightGray
-                        )
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = chatTitle,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                if (isBlocked) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        color = Color(0xFFEF4444).copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "محظور",
+                                            color = Color(0xFFEF4444),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            Text(
+                                text = if (isBlocked) "تم حظر هذا المستخدم" else if (isOtherOnline) LanguageManager.getString("online") else LanguageManager.getString("offline"),
+                                fontSize = 11.sp,
+                                color = if (isBlocked) Color(0xFFEF4444) else if (isOtherOnline) Color(0xFF10B981) else Color.LightGray
+                            )
+                        }
                     }
                 },
                 navigationIcon = {
@@ -224,9 +366,8 @@ fun ChatScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { if (chatId.isNotBlank()) viewModel.loadMessages(chatId) }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Color.White)
-                    }
+                    
+            
 
                     // أيقونة المزيد من الخيارات (⋮)
                     Box {
@@ -244,21 +385,21 @@ fun ChatScreen(
                             modifier = Modifier.background(Color(0xFF1E293B))
                         ) {
                             // 1. عرض الملف الشخصي
-                            DropdownMenuItem(
-                                text = { Text("عرض الملف الشخصي", color = Color.White, fontSize = 14.sp) },
-                                leadingIcon = {
-                                    Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color(0xFF60A5FA))
-                                },
-                                onClick = {
-                                    menuExpanded = false
-                                    showProfileDialog = true
-                                }
-                            )
+                    DropdownMenuItem(
+                        text = { Text(LanguageManager.getString("contact_info"), color = Color.White, fontSize = 14.sp) },
+                        leadingIcon = {
+                            Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color(0xFF60A5FA))
+                        },
+                        onClick = {
+                            menuExpanded = false
+                            showProfileDialog = true
+                        }
+                    )
 
-                            // 2. زر الحظر / فك الحظر التفاعلي
+                            // 2. زر الحظر / فك الحظر
                             if (isBlocked) {
                                 DropdownMenuItem(
-                                    text = { Text("إلغاء حظر المستخدم", color = Color(0xFF10B981), fontSize = 14.sp) },
+                                    text = { Text(LanguageManager.getString("unblock"), color = Color(0xFF10B981), fontSize = 14.sp) },
                                     leadingIcon = {
                                         Icon(Icons.Default.LockOpen, contentDescription = null, tint = Color(0xFF10B981))
                                     },
@@ -269,7 +410,7 @@ fun ChatScreen(
                                 )
                             } else {
                                 DropdownMenuItem(
-                                    text = { Text("حظر المستخدم", color = Color(0xFFEF4444), fontSize = 14.sp) },
+                                    text = { Text(LanguageManager.getString("block"), color = Color(0xFFEF4444), fontSize = 14.sp) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Block, contentDescription = null, tint = Color(0xFFEF4444))
                                     },
@@ -282,7 +423,7 @@ fun ChatScreen(
 
                             // 3. مسح محتوى المحادثة
                             DropdownMenuItem(
-                                text = { Text("مسح محتوى المحادثة", color = Color(0xFFF87171), fontSize = 14.sp) },
+                                text = { Text(LanguageManager.getString("clear_chat"), color = Color(0xFFF87171), fontSize = 14.sp) },
                                 leadingIcon = {
                                     Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = Color(0xFFF87171))
                                 },
@@ -332,7 +473,7 @@ fun ChatScreen(
                         val isMe = msg.senderId == currentUserId
                         Box(
                             modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = if (isMe) Alignment.CenterEnd else Alignment.CenterStart
+                            contentAlignment = if (isMe) AbsoluteAlignment.CenterRight else AbsoluteAlignment.CenterLeft
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(
@@ -345,18 +486,91 @@ fun ChatScreen(
                                 modifier = Modifier.widthIn(max = 280.dp)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = msg.text ?: "",
-                                        color = Color.White,
-                                        fontSize = 15.sp
-                                    )
-                                    if (!msg.timestamp.isNullOrBlank()) {
-                                        Text(
-                                            text = msg.timestamp.orEmpty().takeLast(8),
-                                            color = Color.LightGray,
-                                            fontSize = 10.sp,
-                                            modifier = Modifier.align(Alignment.End)
+                                    val isVoice = msg.text?.startsWith("[VOICE]:") == true
+                            if (isVoice) {
+                                val voicePayload = msg.text?.removePrefix("[VOICE]:") ?: ""
+                                val voiceUrl = voicePayload.substringBefore("|")
+                                val voiceSec = voicePayload.substringAfter("|", "0").toIntOrNull() ?: 0
+                                val isPlayingThis = currentlyPlayingUrl == voiceUrl
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            if (isPlayingThis) {
+                                                AudioHelper.stopPlaying()
+                                                currentlyPlayingUrl = null
+                                            } else {
+                                                currentlyPlayingUrl = voiceUrl
+                                                AudioHelper.playAudio(context, voiceUrl) {
+                                                    currentlyPlayingUrl = null
+                                                }
+                                            }
+                                        },
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            containerColor = if (isMe) Color.White else Color(0xFF2563EB)
+                                        ),
+                                        modifier = Modifier.size(38.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isPlayingThis) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                            contentDescription = "Voice",
+                                            tint = if (isMe) Color(0xFF2563EB) else Color.White,
+                                            modifier = Modifier.size(22.dp)
                                         )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            repeat(14) { i ->
+                                                val h = (6 + (i * 3) % 14).dp
+                                                Box(
+                                                    modifier = Modifier
+                                                        .padding(horizontal = 1.dp)
+                                                        .width(3.dp)
+                                                        .height(h)
+                                                        .background(Color.White.copy(alpha = 0.85f), CircleShape)
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = String.format("%02d:%02d", voiceSec / 60, voiceSec % 60),
+                                            color = Color.White.copy(alpha = 0.85f),
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            } else {
+                                Text(
+                                    text = msg.text ?: "",
+                                    color = Color.White,
+                                    fontSize = 15.sp
+                                )
+                            }
+                                    Row(
+                                        modifier = Modifier.align(Alignment.End).padding(top = 2.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        if (!msg.timestamp.isNullOrBlank()) {
+                                            Text(
+                                                text = formatDisplayTime(msg.timestamp),
+                                                color = Color.LightGray.copy(alpha = 0.8f),
+                                                fontSize = 10.sp
+                                            )
+                                        }
+                                        if (isMe) {
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Icon(
+                                                imageVector = if (msg.isRead) Icons.Default.DoneAll else Icons.Default.Done,
+                                                contentDescription = if (msg.isRead) "قُرئت" else "أُرسلت",
+                                                tint = if (msg.isRead) Color(0xFF38BDF8) else Color.LightGray.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -365,7 +579,7 @@ fun ChatScreen(
                 }
             }
 
-            // الشريط السفلي: إما حقل الكتابة أو شريط التنبيه بالحظر مع زر فك الحظر
+            // الشريط السفلي
             Surface(
                 color = Color(0xFF1E293B),
                 modifier = Modifier.fillMaxWidth()
@@ -387,7 +601,7 @@ fun ChatScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "لقد قمت بحظر هذا المستخدم",
+                                text = LanguageManager.getString("blocked_user_notice"),
                                 color = Color(0xFFEF4444),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
@@ -398,7 +612,7 @@ fun ChatScreen(
                             onClick = {
                                 setUserBlocked(context, chatId, false)
                                 isBlocked = false
-                                Toast.makeText(context, "تم إلغاء حظر $chatTitle بنجاح", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "تم مسح المحادثة", Toast.LENGTH_SHORT).show()
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155)),
                             shape = RoundedCornerShape(8.dp)
@@ -407,129 +621,413 @@ fun ChatScreen(
                         }
                     }
                 } else {
+                    if (isRecording) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp),
+                            .padding(8.dp)
+                            .background(Color(0xFF1E293B), RoundedCornerShape(24.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TextField(
-                            value = messageText,
-                            onValueChange = { messageText = it },
-                            placeholder = { Text(text = "اكتب رسالة...") },
-                            modifier = Modifier.weight(1f),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF0F172A),
-                                unfocusedContainerColor = Color(0xFF0F172A),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            ),
-                            shape = RoundedCornerShape(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         IconButton(
                             onClick = {
-                                if (messageText.isNotBlank()) {
-                                    viewModel.sendMessage(chatId, messageText)
-                                    messageText = ""
+                                AudioHelper.stopRecording()
+                                currentAudioFile?.delete()
+                                currentAudioFile = null
+                                isRecording = false
+                                recordDuration = 0
+                            }
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Cancel", tint = Color.Red)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .background(Color.Red, CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = String.format("%02d:%02d", recordDuration / 60, recordDuration % 60),
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = {
+                                AudioHelper.stopRecording()
+                                isRecording = false
+                                val f = currentAudioFile
+                                if (f != null && f.exists() && f.length() > 0) {
+                                    val b64 = AudioHelper.fileToBase64(f)
+                                    val payload = "[VOICE]:$b64|$recordDuration"
+                                    viewModel.sendMessage(chatId, payload)
+                                    f.delete()
                                 }
+                                currentAudioFile = null
+                                recordDuration = 0
                             },
                             colors = IconButtonDefaults.iconButtonColors(containerColor = Color(0xFF2563EB))
                         ) {
-                            Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White)
+                            Icon(Icons.Default.Send, contentDescription = "Send Voice", tint = Color.White)
                         }
+                    }
+                                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    isEmojiPickerVisible = !isEmojiPickerVisible
+                                }
+                            ) {
+                                Text(
+                                    text = if (isEmojiPickerVisible) "⌨️" else "😊",
+                                    fontSize = 22.sp
+                                )
+                            }
+                            TextField(
+                                value = messageText,
+                                onValueChange = { messageText = it },
+                                placeholder = {
+                                    Text(
+                                        LanguageManager.getString("type_message"),
+                                        color = Color(0xFF64748B)
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 4.dp),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color(0xFF0F172A),
+                                    unfocusedContainerColor = Color(0xFF0F172A),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                shape = RoundedCornerShape(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            if (messageText.isBlank()) {
+                                IconButton(
+                                    onClick = {
+                                        audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    },
+                                    colors = IconButtonDefaults.iconButtonColors(containerColor = Color(0xFF2563EB))
+                                ) {
+                                    Icon(Icons.Default.Mic, contentDescription = "Record Voice", tint = Color.White)
+                                }
+                            } else {
+                                IconButton(
+                                    onClick = {
+                                        if (messageText.isNotBlank()) {
+                                            viewModel.sendMessage(chatId, messageText)
+                                            messageText = ""
+                                        }
+                                    },
+                                    colors = IconButtonDefaults.iconButtonColors(containerColor = Color(0xFF2563EB))
+                                ) {
+                                    Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White)
+                                }
+                            }
+                        }
+                    }
+                }
+                if (isEmojiPickerVisible) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(270.dp)
+                    ) {
+                        EmojiPickerView(
+                            onEmojiSelected = { emoji: String -> messageText += emoji },
+                            onBackspace = {
+                                if (messageText.isNotEmpty()) {
+                                    messageText = messageText.dropLast(1)
+                                }
+                            }
+                        )
                     }
                 }
             }
         }
-    }
 
-    // 👤 1. نافذة عرض الملف الشخصي
+        // ========================================================
     if (showProfileDialog) {
-        Dialog(onDismissRequest = { showProfileDialog = false }) {
+        val displayName = otherUserProfile?.full_name?.takeIf { it.isNotBlank() }
+            ?: otherUserProfile?.name?.takeIf { it.isNotBlank() }
+            ?: chatTitle
+        val displayUsername = otherUserProfile?.username?.takeIf { it.isNotBlank() } ?: "user"
+
+        Dialog(
+            onDismissRequest = { showProfileDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color(0xFF1E293B),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                modifier = Modifier.fillMaxSize(),
+                color = Color(0xFF0B1120)
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Surface(
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        color = Color(0xFF2563EB)
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    text = LanguageManager.getString("contact_info"),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            },
+                            navigationIcon = {
+                                IconButton(onClick = { showProfileDialog = false }) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowBack,
+                                        contentDescription = "رجوع",
+                                        tint = Color.White
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0F172A))
+                        )
+                    },
+                    containerColor = Color(0xFF0B1120)
+                ) { innerPadding ->
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        if (!otherUserProfile?.avatar_url.isNullOrBlank()) {
-                            AsyncImage(
-                                model = otherUserProfile?.avatar_url,
-                                contentDescription = "Avatar",
-                                modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                    }
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                            // صورة البروفايل الكبيرة ومؤشر الاتصال
+                            Box(contentAlignment = Alignment.BottomEnd) {
+                                Surface(
+                                    modifier = Modifier.size(130.dp),
+                                    shape = CircleShape,
+                                    color = Color(0xFF1E293B),
+                                    border = BorderStroke(3.dp, Color(0xFF2563EB))
+                                ) {
+                                    val avatarModel = parseImageModel(otherUserProfile?.avatar_url)
+                                    if (avatarModel != null) {
+                                        AsyncImage(
+                                            model = avatarModel,
+                                            contentDescription = "Avatar",
+                                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Default.Person,
+                                            contentDescription = null,
+                                            tint = Color(0xFF64748B),
+                                            modifier = Modifier.padding(26.dp)
+                                        )
+                                    }
+                                }
 
-                    val displayName = otherUserProfile?.full_name?.takeIf { it.isNotBlank() }
-                        ?: otherUserProfile?.name?.takeIf { it.isNotBlank() }
-                        ?: chatTitle
+                                if (isOtherOnline) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .background(Color(0xFF22C55E), CircleShape)
+                                            .border(3.dp, Color(0xFF0B1120), CircleShape)
+                                    )
+                                }
+                            }
 
-                    val displayUsername = otherUserProfile?.username?.takeIf { it.isNotBlank() } ?: "user"
+                            Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(
-                        text = displayName,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "@$displayUsername",
-                        fontSize = 14.sp,
-                        color = Color(0xFF60A5FA)
-                    )
-
-                    if (!otherUserProfile?.bio.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFF0F172A),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
                             Text(
-                                text = otherUserProfile?.bio ?: "",
-                                fontSize = 13.sp,
-                                color = Color(0xFF94A3B8),
-                                modifier = Modifier.padding(12.dp)
+                                text = displayName,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = "@$displayUsername",
+                                fontSize = 14.sp,
+                                color = Color(0xFF60A5FA)
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = if (isBlocked) "محظور حالياً" else if (isOtherOnline) LanguageManager.getString("online") + " 🟢" else LanguageManager.getString("offline") + " ⚪",
+                                fontSize = 12.sp,
+                                color = if (isBlocked) Color(0xFFEF4444) else if (isOtherOnline) Color(0xFF22C55E) else Color(0xFF94A3B8)
+                            )
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            // شريط الإجراءات السريعة (WhatsApp Action Bar)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                // مراسلة
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.clickable { showProfileDialog = false }
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = Color(0xFF1E293B),
+                                        modifier = Modifier.size(50.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Chat,
+                                            contentDescription = LanguageManager.getString("message"),
+                                            tint = Color(0xFF60A5FA),
+                                            modifier = Modifier.padding(14.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(LanguageManager.getString("message"), color = Color(0xFF94A3B8), fontSize = 12.sp)
+                                }
+                                
+
+                                // حظر
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.clickable {
+                                        showProfileDialog = false
+                                        if (isBlocked) showUnblockConfirmDialog = true else showBlockConfirmDialog = true
+                                    }
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = Color(0xFF1E293B),
+                                        modifier = Modifier.size(50.dp)
+                                    ) {
+                                        Icon(
+                                            if (isBlocked) Icons.Default.LockOpen else Icons.Default.Block,
+                                            contentDescription = "حظر",
+                                            tint = if (isBlocked) Color(0xFF22C55E) else Color(0xFFEF4444),
+                                            modifier = Modifier.padding(14.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(if (isBlocked) LanguageManager.getString("unblock") else LanguageManager.getString("block"), color = if (isBlocked) Color(0xFF22C55E) else Color(0xFFEF4444), fontSize = 12.sp)
+                                }
+                            }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                        // بطاقة الحالة / النبذة (About)
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = LanguageManager.getString("about_section"),
+                                        color = Color(0xFF64748B),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Default.Info,
+                                            contentDescription = null,
+                                            tint = Color(0xFF60A5FA),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(
+                                            text = otherUserProfile?.bio?.ifBlank { "Hey there! I am using NOVA Chat." }
+                                                ?: "Hey there! I am using NOVA Chat.",
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
-                    Button(
-                        onClick = { showProfileDialog = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("إغلاق", color = Color.White)
+                        // بطاقة التشفير التام (E2EE)
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.EnhancedEncryption,
+                                        contentDescription = null,
+                                        tint = Color(0xFF22C55E),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(14.dp))
+                                    Column {
+                                        Text(
+                                            text = LanguageManager.getString("encryption_title"),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = LanguageManager.getString("encryption_desc"),
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF94A3B8)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // بطاقة مسح المحادثة
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        showProfileDialog = false
+                                        showClearChatDialog = true
+                                    },
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.DeleteSweep,
+                                        contentDescription = null,
+                                        tint = Color(0xFFEF4444),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(14.dp))
+                                    Text(
+                                        text = LanguageManager.getString("clear_chat"),
+                                        color = Color(0xFFEF4444),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(20.dp))
+                        }
                     }
                 }
             }
@@ -540,7 +1038,7 @@ fun ChatScreen(
     if (showBlockConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showBlockConfirmDialog = false },
-            title = { Text("حظر المستخدم", color = Color.White, fontWeight = FontWeight.Bold) },
+            title = { Text(LanguageManager.getString("block"), color = Color.White, fontWeight = FontWeight.Bold) },
             text = { Text("هل أنت متأكد من رغبتك في حظر $chatTitle؟ لن تتمكن من إرسال أو استلام رسائل منه.", color = Color(0xFFCBD5E1)) },
             containerColor = Color(0xFF1E293B),
             confirmButton = {
@@ -549,16 +1047,16 @@ fun ChatScreen(
                         setUserBlocked(context, chatId, true)
                         isBlocked = true
                         showBlockConfirmDialog = false
-                        Toast.makeText(context, "تم حظر $chatTitle بنجاح", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "تم مسح المحادثة", Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
                 ) {
-                    Text("حظر", color = Color.White)
+                    Text(LanguageManager.getString("block"), color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showBlockConfirmDialog = false }) {
-                    Text("إلغاء", color = Color(0xFF94A3B8))
+                    Text(LanguageManager.getString("cancel"), color = Color(0xFF94A3B8))
                 }
             }
         )
@@ -568,7 +1066,7 @@ fun ChatScreen(
     if (showUnblockConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showUnblockConfirmDialog = false },
-            title = { Text("إلغاء حظر المستخدم", color = Color.White, fontWeight = FontWeight.Bold) },
+            title = { Text(LanguageManager.getString("unblock"), color = Color.White, fontWeight = FontWeight.Bold) },
             text = { Text("هل تريد إلغاء حظر $chatTitle والتمكن من التواصل معه مجدداً؟", color = Color(0xFFCBD5E1)) },
             containerColor = Color(0xFF1E293B),
             confirmButton = {
@@ -577,7 +1075,7 @@ fun ChatScreen(
                         setUserBlocked(context, chatId, false)
                         isBlocked = false
                         showUnblockConfirmDialog = false
-                        Toast.makeText(context, "تم إلغاء حظر $chatTitle بنجاح", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "تم مسح المحادثة", Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
                 ) {
@@ -593,10 +1091,13 @@ fun ChatScreen(
     }
 
     // 🗑️ 4. نافذة تأكيد مسح المحادثة الفعلي
-    if (showClearChatDialog) {
+    
+        
+    
+        if (showClearChatDialog) {
         AlertDialog(
             onDismissRequest = { showClearChatDialog = false },
-            title = { Text("مسح محتوى المحادثة", color = Color.White, fontWeight = FontWeight.Bold) },
+            title = { Text(LanguageManager.getString("clear_chat"), color = Color.White, fontWeight = FontWeight.Bold) },
             text = { Text("هل أنت متأكد من رغبتك في حذف جميع الرسائل في هذه المحادثة؟ لا يمكن التراجع عن هذا الإجراء.", color = Color(0xFFCBD5E1)) },
             containerColor = Color(0xFF1E293B),
             confirmButton = {
@@ -608,7 +1109,6 @@ fun ChatScreen(
                         showClearChatDialog = false
 
                         scope.launch {
-                            // حذف الرسائل من جانب المستخدم الحالي في Supabase
                             try {
                                 SupabaseManager.postgrest.from("messages").delete {
                                     filter {
@@ -629,19 +1129,22 @@ fun ChatScreen(
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             }
-                            Toast.makeText(context, "تم مسح محتوى المحادثة بنجاح", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "تم مسح المحادثة", Toast.LENGTH_SHORT).show()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
                 ) {
-                    Text("مسح الآن", color = Color.White)
+                    Text(LanguageManager.getString("clear_now"), color = Color.White)
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearChatDialog = false }) {
-                    Text("إلغاء", color = Color(0xFF94A3B8))
-                }
+            TextButton(onClick = { showClearChatDialog = false }) {
+                Text(LanguageManager.getString("cancel"), color = Color(0xFF94A3B8))
             }
-        )
+        }
+    )
+
     }
+
+
+
+}
 }

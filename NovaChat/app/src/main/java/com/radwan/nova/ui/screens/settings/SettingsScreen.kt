@@ -1,5 +1,17 @@
 package com.radwan.nova.ui.screens.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.util.Base64
+import java.io.ByteArrayOutputStream
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.Alignment
+
+import androidx.compose.ui.res.stringResource
+import com.radwan.nova.R
+
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -30,6 +42,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.EnhancedEncryption
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
@@ -64,7 +77,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -75,6 +87,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.radwan.nova.data.local.LanguageManager
 import com.radwan.nova.data.remote.RemoteProfile
@@ -84,7 +97,6 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 import java.io.File
 
-// دوال حساب وحذف الكاش
 private fun getCacheSizeFormatted(context: Context): String {
     return try {
         var size: Long = 0
@@ -134,28 +146,52 @@ fun SettingsScreen(
         mutableStateOf(prefs.getBoolean("dark_mode_enabled", true))
     }
 
-    // حالات الخصوصية والأمان
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var appLockEnabled by remember { mutableStateOf(prefs.getBoolean("app_lock_enabled", false)) }
     var hideLastSeen by remember { mutableStateOf(prefs.getBoolean("hide_last_seen", false)) }
     var readReceiptsEnabled by remember { mutableStateOf(prefs.getBoolean("read_receipts_enabled", true)) }
 
-    // حالات التخزين والبيانات
     var showStorageDialog by remember { mutableStateOf(false) }
     var cacheSizeText by remember { mutableStateOf(getCacheSizeFormatted(context)) }
     var autoDownloadWifi by remember { mutableStateOf(prefs.getBoolean("auto_download_wifi", true)) }
     var autoDownloadMobile by remember { mutableStateOf(prefs.getBoolean("auto_download_mobile", false)) }
     var lowDataUsage by remember { mutableStateOf(prefs.getBoolean("low_data_usage", false)) }
 
-    // حالة اختيار اللغة
     var showLanguageDialog by remember { mutableStateOf(false) }
 
-    // حالات تعديل الملف الشخصي
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
     var editUsername by remember { mutableStateOf("") }
     var editBio by remember { mutableStateOf("") }
     var editAvatarUrl by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            try {
+                val inputStream = context.contentResolver.openInputStream(it)
+                val originalBitmap = BitmapFactory.decodeStream(inputStream)
+                if (originalBitmap != null) {
+                    val maxDim = 300
+                    val width = originalBitmap.width
+                    val height = originalBitmap.height
+                    val ratio = width.toFloat() / height.toFloat()
+                    val newW = if (width > height) maxDim else (maxDim * ratio).toInt()
+                    val newH = if (height >= width) maxDim else (maxDim / ratio).toInt()
+                    val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, newW, newH, true)
+
+                    val outputStream = ByteArrayOutputStream()
+                    scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 75, outputStream)
+                    val base64 = Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
+                    editAvatarUrl = "data:image/jpeg;base64,$base64"
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "فشل تجهيز الصورة", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     var isSaving by remember { mutableStateOf(false) }
 
     suspend fun loadUserProfile() {
@@ -174,6 +210,7 @@ fun SettingsScreen(
                     editUsername = profile.username
                     editBio = profile.bio ?: ""
                     editAvatarUrl = profile.avatar_url ?: ""
+                    selectedImageUri = null
                 }
             }
         } catch (e: Exception) {
@@ -252,7 +289,7 @@ fun SettingsScreen(
                         ) {
                             if (!userProfile?.avatar_url.isNullOrBlank()) {
                                 AsyncImage(
-                                    model = userProfile?.avatar_url,
+                                    model = parseImageModel(userProfile?.avatar_url),
                                     contentDescription = "Avatar",
                                     modifier = Modifier.fillMaxSize().clip(CircleShape),
                                     contentScale = ContentScale.Crop
@@ -324,7 +361,6 @@ fun SettingsScreen(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                        // لغة التطبيق
                         SettingsClickItem(
                             icon = Icons.Default.Language,
                             title = LanguageManager.getString("language_title"),
@@ -332,7 +368,6 @@ fun SettingsScreen(
                             onClick = { showLanguageDialog = true }
                         )
 
-                        // الإشعارات
                         SettingsToggleItem(
                             icon = Icons.Default.Notifications,
                             title = LanguageManager.getString("notifications_title"),
@@ -343,7 +378,6 @@ fun SettingsScreen(
                             }
                         )
 
-                        // الوضع الليلي
                         SettingsToggleItem(
                             icon = Icons.Default.DarkMode,
                             title = LanguageManager.getString("dark_mode_title"),
@@ -354,19 +388,17 @@ fun SettingsScreen(
                             }
                         )
 
-                        // 🔒 الخصوصية والأمان والتشفير
                         SettingsClickItem(
                             icon = Icons.Default.Lock,
                             title = LanguageManager.getString("privacy_title"),
-                            subtitle = if (appLockEnabled) "القفل مفعل • تشفير تام" else "تشفير تام E2EE",
+                            subtitle = if (appLockEnabled) LanguageManager.getString("lock_active_e2ee") else LanguageManager.getString("lock_inactive_e2ee"),
                             onClick = { showPrivacyDialog = true }
                         )
 
-                        // 💾 التخزين والبيانات المؤقتة
                         SettingsClickItem(
                             icon = Icons.Default.Storage,
                             title = LanguageManager.getString("storage_title"),
-                            subtitle = "الكاش: $cacheSizeText",
+                            subtitle = "${stringResource(R.string.cache_prefix_label)}$cacheSizeText",
                             onClick = {
                                 cacheSizeText = getCacheSizeFormatted(context)
                                 showStorageDialog = true
@@ -376,10 +408,10 @@ fun SettingsScreen(
                 }
             }
 
-            // 3️⃣ تواصل مع المطور (Developer Contact)
+            // 3️⃣ تواصل مع المطور
             item {
                 Text(
-                    text = "تواصل مع المطور",
+                    text = stringResource(R.string.contact_developer),
                     color = Color(0xFF94A3B8),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -392,10 +424,9 @@ fun SettingsScreen(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                        // خيار الإيميل
                         SettingsClickItem(
                             icon = Icons.Default.Email,
-                            title = "البريد الإلكتروني",
+                            title = stringResource(R.string.email_contact),
                             subtitle = "retwan.tech@gmail.com",
                             onClick = {
                                 try {
@@ -405,15 +436,14 @@ fun SettingsScreen(
                                     }
                                     context.startActivity(emailIntent)
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "لم يتم العثور على تطبيق بريد", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.no_email_app), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         )
 
-                        // خيار الفيسبوك
                         SettingsClickItem(
                             icon = Icons.Default.Public,
-                            title = "فيسبوك (Facebook)",
+                            title = stringResource(R.string.facebook_contact),
                             subtitle = "Ridwan Almasouri",
                             onClick = {
                                 try {
@@ -421,7 +451,7 @@ fun SettingsScreen(
                                     val fbIntent = Intent(Intent.ACTION_VIEW, fbUri)
                                     context.startActivity(fbIntent)
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "تعذر فتح الرابط", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.link_open_failed), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         )
@@ -431,7 +461,7 @@ fun SettingsScreen(
         }
     }
 
-    // 🔒 نافذة الخصوصية والأمان والتشفير
+    // 🔒 نافذة الخصوصية
     if (showPrivacyDialog) {
         Dialog(onDismissRequest = { showPrivacyDialog = false }) {
             Surface(
@@ -441,39 +471,21 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .padding(8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp)
-                ) {
+                Column(modifier = Modifier.padding(20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.EnhancedEncryption,
-                            contentDescription = null,
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Icon(Icons.Default.EnhancedEncryption, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "الخصوصية والأمان",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = Color.White
-                        )
+                        Text(text = stringResource(R.string.privacy_security_title), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "محادثاتك محمية ومشفرة من طرف إلى طرف (E2EE) تلقائياً.",
-                        fontSize = 12.sp,
-                        color = Color(0xFF94A3B8)
-                    )
-
+                    Text(text = stringResource(R.string.privacy_security_desc), fontSize = 12.sp, color = Color(0xFF94A3B8))
                     Spacer(modifier = Modifier.height(16.dp))
                     Divider(color = Color(0xFF334155), thickness = 1.dp)
 
-                    // قفل التطبيق
                     SettingsToggleItem(
                         icon = Icons.Default.Fingerprint,
-                        title = "قفل التطبيق بالبصمة / الرمز",
+                        title = stringResource(R.string.lock_app_title),
                         checked = appLockEnabled,
                         onCheckedChange = {
                             appLockEnabled = it
@@ -482,10 +494,9 @@ fun SettingsScreen(
                         }
                     )
 
-                    // إخفاء آخر ظهور
                     SettingsToggleItem(
                         icon = Icons.Default.RemoveRedEye,
-                        title = "إخفاء حالة الاتصال وآخر ظهور",
+                        title = stringResource(R.string.hide_online_status),
                         checked = hideLastSeen,
                         onCheckedChange = {
                             hideLastSeen = it
@@ -493,10 +504,9 @@ fun SettingsScreen(
                         }
                     )
 
-                    // مؤشرات القراءة
                     SettingsToggleItem(
                         icon = Icons.Default.Check,
-                        title = "مؤشرات قراءة الرسائل (صحين)",
+                        title = stringResource(R.string.read_receipts),
                         checked = readReceiptsEnabled,
                         onCheckedChange = {
                             readReceiptsEnabled = it
@@ -506,10 +516,7 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    TextButton(
-                        onClick = { showPrivacyDialog = false },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
+                    TextButton(onClick = { showPrivacyDialog = false }, modifier = Modifier.align(Alignment.End)) {
                         Text(LanguageManager.getString("close"), color = Color(0xFF60A5FA), fontWeight = FontWeight.Bold)
                     }
                 }
@@ -517,7 +524,7 @@ fun SettingsScreen(
         }
     }
 
-    // 💾 نافذة التخزين والبيانات المؤقتة
+    // 💾 نافذة التخزين
     if (showStorageDialog) {
         Dialog(onDismissRequest = { showStorageDialog = false }) {
             Surface(
@@ -527,28 +534,15 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .padding(8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp)
-                ) {
+                Column(modifier = Modifier.padding(20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Storage,
-                            contentDescription = null,
-                            tint = Color(0xFF60A5FA),
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Icon(Icons.Default.Storage, contentDescription = null, tint = Color(0xFF60A5FA), modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "التخزين والبيانات",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = Color.White
-                        )
+                        Text(text = stringResource(R.string.storage_data_title), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // كارت حجم الكاش الفعلي مع زر التنظيف
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = Color(0xFF0F172A),
@@ -562,18 +556,9 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text(
-                                    text = "الذاكرة المؤقتة (Cache)",
-                                    fontSize = 14.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                Text(text = stringResource(R.string.cache_memory), fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = cacheSizeText,
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF60A5FA)
-                                )
+                                Text(text = cacheSizeText, fontSize = 12.sp, color = Color(0xFF60A5FA))
                             }
 
                             Button(
@@ -587,17 +572,17 @@ fun SettingsScreen(
                             ) {
                                 Icon(Icons.Default.CleaningServices, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("مسح الكاش", fontSize = 12.sp, color = Color.White)
+                                Text(stringResource(R.string.clear_cache_action), fontSize = 12.sp, color = Color.White)
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = "التنزيل التلقائي للوسائط", color = Color(0xFF94A3B8), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.auto_download_media), color = Color(0xFF94A3B8), fontSize = 12.sp, fontWeight = FontWeight.Bold)
 
                     SettingsToggleItem(
                         icon = Icons.Default.Wifi,
-                        title = "تنزيل الوسائط عبر Wi-Fi تلقائياً",
+                        title = stringResource(R.string.download_wifi),
                         checked = autoDownloadWifi,
                         onCheckedChange = {
                             autoDownloadWifi = it
@@ -607,7 +592,7 @@ fun SettingsScreen(
 
                     SettingsToggleItem(
                         icon = Icons.Default.Storage,
-                        title = "تنزيل الوسائط عبر بيانات الهاتف",
+                        title = stringResource(R.string.download_mobile),
                         checked = autoDownloadMobile,
                         onCheckedChange = {
                             autoDownloadMobile = it
@@ -617,7 +602,7 @@ fun SettingsScreen(
 
                     SettingsToggleItem(
                         icon = Icons.Default.CleaningServices,
-                        title = "وضع توفير استهلاك البيانات",
+                        title = stringResource(R.string.data_saver_mode),
                         checked = lowDataUsage,
                         onCheckedChange = {
                             lowDataUsage = it
@@ -627,10 +612,7 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    TextButton(
-                        onClick = { showStorageDialog = false },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
+                    TextButton(onClick = { showStorageDialog = false }, modifier = Modifier.align(Alignment.End)) {
                         Text(LanguageManager.getString("close"), color = Color(0xFF60A5FA), fontWeight = FontWeight.Bold)
                     }
                 }
@@ -638,7 +620,7 @@ fun SettingsScreen(
         }
     }
 
-    // 🌐 نافذة اختيار اللغة
+    // 🌐 نافذة اللغة
     if (showLanguageDialog) {
         Dialog(onDismissRequest = { showLanguageDialog = false }) {
             Surface(
@@ -648,16 +630,8 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .padding(8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    Text(
-                        text = LanguageManager.getString("select_language"),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.White
-                    )
-
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(text = LanguageManager.getString("select_language"), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     val languages = listOf(
@@ -675,6 +649,7 @@ fun SettingsScreen(
                                 .clickable {
                                     LanguageManager.setLanguage(context, code)
                                     showLanguageDialog = false
+                                    (context as? android.app.Activity)?.recreate()
                                 },
                             shape = RoundedCornerShape(12.dp),
                             color = if (isSelected) Color(0xFF2563EB).copy(alpha = 0.2f) else Color.Transparent
@@ -695,12 +670,7 @@ fun SettingsScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                                 if (isSelected) {
-                                    Icon(
-                                        Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = Color(0xFF60A5FA),
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF60A5FA), modifier = Modifier.size(20.dp))
                                 }
                             }
                         }
@@ -708,10 +678,7 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    TextButton(
-                        onClick = { showLanguageDialog = false },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
+                    TextButton(onClick = { showLanguageDialog = false }, modifier = Modifier.align(Alignment.End)) {
                         Text(LanguageManager.getString("close"), color = Color(0xFF94A3B8))
                     }
                 }
@@ -719,177 +686,245 @@ fun SettingsScreen(
         }
     }
 
-    // 🌟 نافذة تعديل الملف الشخصي
+    // ========================================================
+    // 🌟 شاشة الملف الشخصي الكاملة نمط الواتساب (WhatsApp Full Profile)
+    // ========================================================
     if (showEditProfileDialog) {
-        Dialog(onDismissRequest = { if (!isSaving) showEditProfileDialog = false }) {
+        Dialog(
+            onDismissRequest = { if (!isSaving) showEditProfileDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color(0xFF1E293B),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                modifier = Modifier.fillMaxSize(),
+                color = Color(0xFF0B1120)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = LanguageManager.getString("edit_profile"),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Surface(
-                        modifier = Modifier.size(72.dp),
-                        shape = CircleShape,
-                        color = Color(0xFF2563EB)
-                    ) {
-                        if (editAvatarUrl.isNotBlank()) {
-                            AsyncImage(
-                                model = editAvatarUrl,
-                                contentDescription = "Avatar Preview",
-                                modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = editName,
-                        onValueChange = { editName = it },
-                        label = { Text(LanguageManager.getString("full_name_label"), color = Color(0xFF94A3B8)) },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = editUsername,
-                        onValueChange = { editUsername = it },
-                        label = { Text(LanguageManager.getString("username_label"), color = Color(0xFF94A3B8)) },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = editAvatarUrl,
-                        onValueChange = { editAvatarUrl = it },
-                        label = { Text(LanguageManager.getString("avatar_url_label"), color = Color(0xFF94A3B8)) },
-                        placeholder = { Text("https://example.com/avatar.jpg", color = Color.DarkGray) },
-                        singleLine = true,
-                        trailingIcon = {
-                            Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color(0xFF60A5FA))
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = editBio,
-                        onValueChange = { editBio = it },
-                        label = { Text(LanguageManager.getString("bio_label"), color = Color(0xFF94A3B8)) },
-                        maxLines = 2,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(
-                            onClick = { showEditProfileDialog = false },
-                            enabled = !isSaving
-                        ) {
-                            Text(LanguageManager.getString("cancel"), color = Color(0xFF94A3B8))
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Button(
-                            onClick = {
-                                val myId = SupabaseManager.auth.currentUserOrNull()?.id
-                                if (myId != null) {
-                                    scope.launch {
-                                        isSaving = true
-                                        try {
-                                            val updates = mutableMapOf<String, Any>()
-                                            if (editName.isNotBlank()) updates["full_name"] = editName
-                                            if (editUsername.isNotBlank()) updates["username"] = editUsername
-                                            updates["bio"] = editBio
-                                            updates["avatar_url"] = editAvatarUrl
-
-                                            SupabaseManager.postgrest.from("profiles").update(updates) {
-                                                filter {
-                                                    eq("id", myId)
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    text = LanguageManager.getString("edit_profile"),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            },
+                            navigationIcon = {
+                                IconButton(
+                                    onClick = { if (!isSaving) showEditProfileDialog = false },
+                                    enabled = !isSaving
+                                ) {
+                                    Icon(Icons.Default.ArrowBack, contentDescription = "رجوع", tint = Color.White)
+                                }
+                            },
+                            actions = {
+                                if (isSaving) {
+                                    CircularProgressIndicator(
+                                        color = Color(0xFF2563EB),
+                                        modifier = Modifier.size(22.dp).padding(end = 12.dp)
+                                    )
+                                } else {
+                                    TextButton(
+                                        onClick = {
+                                            val myId = SupabaseManager.auth.currentUserOrNull()?.id
+                                            if (myId != null) {
+                                                scope.launch {
+                                                    isSaving = true
+                                                    try {
+                                                        val updates = mutableMapOf<String, String>()
+                                                        updates["id"] = myId
+                                                        if (editName.isNotBlank()) updates["full_name"] = editName
+                                                        if (editUsername.isNotBlank()) updates["username"] = editUsername
+                                                        updates["bio"] = editBio
+                                                        updates["avatar_url"] = editAvatarUrl
+                                                        SupabaseManager.postgrest.from("profiles").upsert(updates)
+                                                        Toast.makeText(context, "تم حفظ الملف الشخصي بنجاح!", Toast.LENGTH_SHORT).show()
+                                                        loadUserProfile()
+                                                        showEditProfileDialog = false
+                                                    } catch (e: Exception) {
+                                                        e.printStackTrace()
+                                                        Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
+                                                    } finally {
+                                                        isSaving = false
+                                                    }
                                                 }
                                             }
-                                            loadUserProfile()
-                                            showEditProfileDialog = false
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
-                                            Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
-                                        } finally {
-                                            isSaving = false
                                         }
+                                    ) {
+                                        Text(LanguageManager.getString("save"), color = Color(0xFF60A5FA), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                     }
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                            shape = RoundedCornerShape(10.dp),
-                            enabled = !isSaving
-                        ) {
-                            if (isSaving) {
-                                CircularProgressIndicator(
-                                    color = Color.White,
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text(LanguageManager.getString("save_changes"), color = Color.White, fontWeight = FontWeight.Bold)
+                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0F172A))
+                        )
+                    },
+                    containerColor = Color(0xFF0B1120)
+                ) { innerPadding ->
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(horizontal = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // صورة البروفايل الكبيرة مع زر الكاميرا (WhatsApp Style)
+                            Box(contentAlignment = Alignment.BottomEnd) {
+                                Surface(
+                                    modifier = Modifier
+                                        .size(140.dp)
+                                        .clickable { imagePickerLauncher.launch("image/*") },
+                                    shape = CircleShape,
+                                    color = Color(0xFF1E293B),
+                                    border = BorderStroke(3.dp, Color(0xFF2563EB))
+                                ) {
+                                    if (editAvatarUrl.isNotBlank()) {
+                                        AsyncImage(
+                                            model = selectedImageUri ?: parseImageModel(editAvatarUrl),
+                                            contentDescription = "Avatar",
+                                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Default.Person,
+                                            contentDescription = null,
+                                            tint = Color(0xFF64748B),
+                                            modifier = Modifier.padding(28.dp)
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clickable { imagePickerLauncher.launch("image/*") },
+                                    shape = CircleShape,
+                                    color = Color(0xFF22C55E),
+                                    border = BorderStroke(3.dp, Color(0xFF0B1120))
+                                ) {
+                                    Icon(
+                                        Icons.Default.AddPhotoAlternate,
+                                        contentDescription = "تغيير الصورة",
+                                        tint = Color.White,
+                                        modifier = Modifier.padding(10.dp)
+                                    )
+                                }
                             }
+                        }
+
+                        // بطاقة الحقول المرتبة
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(18.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                            ) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    // الاسم الكامل
+                                    OutlinedTextField(
+                                        value = editName,
+                                        onValueChange = { editName = it },
+                                        label = { Text(LanguageManager.getString("full_name_label"), color = Color(0xFF94A3B8)) },
+                                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF60A5FA), modifier = Modifier.size(20.dp)) },
+                                        singleLine = true,
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = Color(0xFF2563EB),
+                                            unfocusedBorderColor = Color(0xFF334155),
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    Text(text = LanguageManager.getString("profile_hint"),
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF64748B),
+                                        modifier = Modifier.padding(top = 4.dp, bottom = 14.dp, start = 4.dp)
+                                    )
+
+                                    // اسم المستخدم
+                                    OutlinedTextField(
+                                        value = editUsername,
+                                        onValueChange = { editUsername = it },
+                                        label = { Text(LanguageManager.getString("username_label"), color = Color(0xFF94A3B8)) },
+                                        leadingIcon = {
+                                            Text("@", color = Color(0xFF60A5FA), fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(start = 12.dp))
+                                        },
+                                        singleLine = true,
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = Color(0xFF2563EB),
+                                            unfocusedBorderColor = Color(0xFF334155),
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    // النبذة / الحالة
+                                    OutlinedTextField(
+                                        value = editBio,
+                                        onValueChange = { editBio = it },
+                                        label = { Text(LanguageManager.getString("bio_label"), color = Color(0xFF94A3B8)) },
+                                        leadingIcon = { Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF60A5FA), modifier = Modifier.size(20.dp)) },
+                                        maxLines = 3,
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = Color(0xFF2563EB),
+                                            unfocusedBorderColor = Color(0xFF334155),
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+
+                        // زر حفظ أسفل الشاشة
+                        item {
+                            Button(
+                                onClick = {
+                                    val myId = SupabaseManager.auth.currentUserOrNull()?.id
+                                    if (myId != null) {
+                                        scope.launch {
+                                            isSaving = true
+                                            try {
+                                                val updates = mutableMapOf<String, String>()
+                                                updates["id"] = myId
+                                                if (editName.isNotBlank()) updates["full_name"] = editName
+                                                if (editUsername.isNotBlank()) updates["username"] = editUsername
+                                                updates["bio"] = editBio
+                                                updates["avatar_url"] = editAvatarUrl
+                                                SupabaseManager.postgrest.from("profiles").upsert(updates)
+                                                Toast.makeText(context, "تم حفظ الملف الشخصي بنجاح!", Toast.LENGTH_SHORT).show()
+                                                loadUserProfile()
+                                                showEditProfileDialog = false
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                                Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
+                                            } finally {
+                                                isSaving = false
+                                            }
+                                        }
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier.fillMaxWidth().height(52.dp),
+                                enabled = !isSaving
+                            ) {
+                                if (isSaving) {
+                                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp))
+                                } else {
+                                    Text(LanguageManager.getString("save_changes"), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(20.dp))
                         }
                     }
                 }
@@ -989,5 +1024,19 @@ fun SettingsClickItem(
             contentDescription = null,
             tint = Color(0xFF64748B)
         )
+    }
+}
+
+fun parseImageModel(data: String?): Any? {
+    if (data.isNullOrBlank()) return null
+    return if (data.startsWith("data:image") && data.contains(",")) {
+        try {
+            val base64Str = data.substringAfter(",")
+            android.util.Base64.decode(base64Str, android.util.Base64.DEFAULT)
+        } catch (e: Exception) {
+            data
+        }
+    } else {
+        data
     }
 }

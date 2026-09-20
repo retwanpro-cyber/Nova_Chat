@@ -128,7 +128,7 @@ fun MessageBubble(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = message.timestamp,
+                        text = formatMessageTime(message.timestamp),
                         fontSize = 11.sp,
                         color = textColor.copy(alpha = 0.7f)
                     )
@@ -180,5 +180,63 @@ fun MessageBubble(
                 )
             }
         }
+    }
+}
+
+fun formatMessageTime(raw: String?): String {
+    if (raw.isNullOrBlank()) return ""
+    val str = raw.trim()
+    return try {
+        val num = str.toLongOrNull()
+        if (num != null) {
+            val d = java.util.Date(num)
+            val sdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+            sdf.timeZone = java.util.TimeZone.getDefault()
+            sdf.format(d)
+        } else {
+            // محاولة التحليل عبر عدة صيغ شائعة
+            val patterns = arrayOf(
+                "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ssXXX",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss",
+                "HH:mm:ss",
+                "HH:mm"
+            )
+            var parsedDate: java.util.Date? = null
+            for (p in patterns) {
+                try {
+                    val sdf = java.text.SimpleDateFormat(p, java.util.Locale.US)
+                    if (str.contains("Z") || str.contains("+")) {
+                        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    }
+                    val d = sdf.parse(str)
+                    if (d != null) {
+                        parsedDate = d
+                        break
+                    }
+                } catch (e: Exception) {}
+            }
+            if (parsedDate != null) {
+                val outSdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+                outSdf.timeZone = java.util.TimeZone.getDefault()
+                outSdf.format(parsedDate)
+            } else {
+                // استخراج الساعة والدقيقة بنمط Regex في حال فشل أي تحليل قياسي
+                val match = Regex("(\\d{1,2}):(\\d{2})").find(str)
+                if (match != null) {
+                    val h = match.groupValues[1].toIntOrNull() ?: 0
+                    val m = match.groupValues[2]
+                    val amPm = if (h >= 12) (if (java.util.Locale.getDefault().language == "ar") "م" else "PM") else (if (java.util.Locale.getDefault().language == "ar") "ص" else "AM")
+                    val displayH = if (h == 0) 12 else if (h > 12) h - 12 else h
+                    "$displayH:$m $amPm"
+                } else {
+                    str
+                }
+            }
+        }
+    } catch (e: Exception) {
+        str
     }
 }

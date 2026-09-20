@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:2:1-41:12
-INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:2:1-41:12
-INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:2:1-41:12
-INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:2:1-41:12
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:2:1-47:12
+INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:2:1-47:12
+INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:2:1-47:12
+INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:2:1-47:12
 MERGED from [androidx.work:work-runtime-ktx:2.9.1] /home/codespace/.gradle/caches/9.4.0/transforms/993ec6a2d28df5acc68e38696369bec3/transformed/work-runtime-ktx-2.9.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.work:work-runtime:2.9.1] /home/codespace/.gradle/caches/9.4.0/transforms/0c9bbfc9f9f2e072fbc46dd468543970/transformed/work-runtime-2.9.1/AndroidManifest.xml:17:1-145:12
 MERGED from [androidx.navigation:navigation-common:2.7.7] /home/codespace/.gradle/caches/9.4.0/transforms/d081f2e9c2f27022a6ac3eb572764996/transformed/navigation-common-2.7.7/AndroidManifest.xml:17:1-22:12
@@ -99,23 +99,35 @@ uses-permission#android.permission.INTERNET
 ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:7:5-67
 	android:name
 		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:7:22-64
+uses-permission#android.permission.RECORD_AUDIO
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:8:5-71
+	android:name
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:8:22-68
 uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:8:5-79
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:9:5-79
 MERGED from [androidx.work:work-runtime:2.9.1] /home/codespace/.gradle/caches/9.4.0/transforms/0c9bbfc9f9f2e072fbc46dd468543970/transformed/work-runtime-2.9.1/AndroidManifest.xml:24:5-79
 MERGED from [androidx.work:work-runtime:2.9.1] /home/codespace/.gradle/caches/9.4.0/transforms/0c9bbfc9f9f2e072fbc46dd468543970/transformed/work-runtime-2.9.1/AndroidManifest.xml:24:5-79
 	android:name
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:8:22-76
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:9:22-76
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:11:5-77
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:12:5-77
 	android:name
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:11:22-74
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:12:22-74
 uses-permission#android.permission.VIBRATE
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:12:5-66
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:13:5-66
 	android:name
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:12:22-63
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:13:22-63
+uses-permission#android.permission.MODIFY_AUDIO_SETTINGS
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:15:9-84
+	android:name
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:15:26-81
+uses-permission#android.permission.BLUETOOTH
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:16:5-68
+	android:name
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:16:22-65
 application
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:14:5-39:19
-INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:14:5-39:19
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:17:5-45:19
+INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:17:5-45:19
 MERGED from [androidx.work:work-runtime:2.9.1] /home/codespace/.gradle/caches/9.4.0/transforms/0c9bbfc9f9f2e072fbc46dd468543970/transformed/work-runtime-2.9.1/AndroidManifest.xml:28:5-143:19
 MERGED from [androidx.work:work-runtime:2.9.1] /home/codespace/.gradle/caches/9.4.0/transforms/0c9bbfc9f9f2e072fbc46dd468543970/transformed/work-runtime-2.9.1/AndroidManifest.xml:28:5-143:19
 MERGED from [io.github.jan-tennert.supabase:storage-kt-android-debug:2.4.0] /home/codespace/.gradle/caches/9.4.0/transforms/9c4d769fc4205ba689306975994e0498/transformed/storage-kt-debug/AndroidManifest.xml:8:5-18:19
@@ -143,47 +155,47 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/codespace/.gradle/cac
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.13.1] /home/codespace/.gradle/caches/9.4.0/transforms/bd69cdf20915b9b3cdcbe9307a1a4ee8/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:21:9-35
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:24:9-35
 	android:label
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:19:9-41
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:22:9-41
 	android:fullBackupContent
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:17:9-54
-	android:roundIcon
 		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:20:9-54
+	android:roundIcon
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:23:9-54
 	tools:targetApi
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:24:9-29
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:27:9-29
 	android:icon
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:18:9-43
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:21:9-43
 	android:allowBackup
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:15:9-35
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:18:9-35
 	android:theme
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:22:9-46
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:25:9-46
 	android:dataExtractionRules
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:16:9-65
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:19:9-65
 	android:usesCleartextTraffic
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:23:9-44
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:26:9-44
 activity#com.radwan.nova.MainActivity
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:26:9-37:20
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:29:9-40:20
 	android:label
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:29:13-45
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:32:13-45
 	android:windowSoftInputMode
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:30:13-55
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:33:13-55
 	android:exported
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:28:13-36
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:31:13-36
 	android:theme
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:31:13-50
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:34:13-50
 	android:name
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:27:13-41
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:30:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:32:13-36:29
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:35:13-39:29
 action#android.intent.action.MAIN
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:33:17-69
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:36:17-69
 	android:name
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:33:25-66
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:36:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:35:17-77
+ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:38:17-77
 	android:name
-		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:35:27-74
+		ADDED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml:38:27-74
 uses-sdk
 INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /workspaces/codespaces-blank/NovaChat/app/src/main/AndroidManifest.xml

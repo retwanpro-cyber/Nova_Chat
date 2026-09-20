@@ -23,5 +23,6 @@ data class RemoteMessage(
     val sender_id: String = "",
     val text: String = "",
     val created_at: String? = null,
-    val sender_name: String? = null
+    val sender_name: String? = null,
+    val is_read: Boolean = false
 )

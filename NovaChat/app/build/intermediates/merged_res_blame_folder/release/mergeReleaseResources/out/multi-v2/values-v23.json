@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.radwan.nova.app-mergeReleaseResources-60:/values-v23/values-v23.xml",
+            "map": [
+                {
+                    "source": "/home/codespace/.gradle/caches/9.4.0/transforms/0c9bbfc9f9f2e072fbc46dd468543970/transformed/work-runtime-2.9.1/res/values-v23/values-v23.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,121",
+                        "endColumns": "65,62",
+                        "endOffsets": "116,179"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,73 +1,64 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">نوفا شات</string>
-
-    <!-- Navigation & Main Screen -->
-    <string name="chats_title">نوفا شات</string>
+    <string name="app_name">NOVA Chat</string>
+    <string name="login_title">مرحباً بك مجدداً</string>
+    <string name="login_subtitle">سجل الدخول للمتابعة في NOVA Chat</string>
+    <string name="email_label">البريد الإلكتروني</string>
+    <string name="email_hint">أدخل بريدك الإلكتروني</string>
+    <string name="password_label">كلمة المرور</string>
+    <string name="password_hint">أدخل كلمة المرور</string>
+    <string name="login_button">تسجيل الدخول</string>
+    <string name="register_button">إنشاء حساب جديد</string>
+    <string name="no_account">ليس لديك حساب؟ أنشئ حسابك الآن</string>
+    <string name="have_account">لديك حساب بالفعل؟ سجل دخولك</string>
+    <string name="username_label">اسم المستخدم</string>
+    <string name="username_hint">اختر اسم مستخدم</string>
+    <string name="full_name_label">الاسم الكامل</string>
+    <string name="full_name_hint">أدخل اسمك الكامل</string>
+    
+    <!-- Home & Navigation -->
+    <string name="chats_title">المحادثات</string>
+    <string name="no_chats_found">لا توجد محادثات حتى الآن</string>
+    <string name="start_chat_prompt">اضغط على الزر أدناه لبدء محادثة جديدة</string>
     <string name="new_chat">محادثة جديدة</string>
+    <string name="settings_title">الإعدادات</string>
+    <string name="logout">تسجيل الخروج</string>
     <string name="search_hint">البحث في المحادثات أو المستخدمين...</string>
-    <string name="no_chats_found">لا توجد محادثات بعد</string>
-    <string name="start_chat_prompt">اضغط على الزر بالأسفل لبدء محادثة جديدة</string>
-    <string name="selected_count">تم تحديد %1$d</string>
-    <string name="delete_chats">حذف</string>
-    <string name="delete_confirm_title">حذف المحادثة؟</string>
-    <string name="delete_confirm_message">هل أنت متأكد من رغبتك في حذف المحادثة المحددة؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="more_options">المزيد من الخيارات</string>
     <string name="cancel">إلغاء</string>
-    <string name="delete">حذف</string>
-
-    <!-- Chat Screen -->
-    <string name="type_message">اكتب رسالة...</string>
-    <string name="send">إرسال</string>
-    <string name="online">متصل الآن</string>
-    <string name="offline">غير متصل</string>
-    <string name="today">اليوم</string>
-    <string name="yesterday">أمس</string>
-    <string name="empty_chat">قل مرحباً وابدأ المحادثة الآن!</string>
-
-    <!-- Message Actions BottomSheet -->
-    <string name="action_reply">رد</string>
-    <string name="action_remind">تذكيري</string>
-    <string name="action_pin">تثبيت الرسالة</string>
-    <string name="action_save">حفظ الرسالة</string>
-    <string name="action_copy">نسخ النص</string>
-    <string name="action_forward">إعادة توجيه</string>
-    <string name="action_delete">حذف الرسالة</string>
-    <string name="remind_10_min">بعد 10 دقائق</string>
-    <string name="remind_1_hour">بعد ساعة</string>
-    <string name="remind_tomorrow">غداً</string>
-
-    <!-- About Screen -->
-    <string name="about_nova">حول نوفا</string>
-    <string name="app_slogan">الجيل القادم من المراسلة الآمنة</string>
-    <string name="copyright">© 2026 نوفا شات. جميع الحقوق محفوظة.</string>
 
     <!-- Settings Screen -->
-    <string name="settings_title">الإعدادات</string>
-    <string name="profile_section">الملف الشخصي</string>
-    <string name="role_admin">مسؤول النظام</string>
-    <string name="role_user">مستخدم</string>
+    <string name="preferences_privacy">التفضيلات والخصوصية</string>
     <string name="app_language">لغة التطبيق</string>
-    <string name="language_system">افتراضي النظام (تلقائي)</string>
-    <string name="language_arabic">العربية</string>
-    <string name="language_english">English (الإنجليزية)</string>
-    <string name="notifications">الإشعارات</string>
-    <string name="notifications_desc">تلقي تنبيهات عند وصول رسائل جديدة</string>
+    <string name="push_notifications">إشعارات التطبيق</string>
     <string name="dark_mode">الوضع الليلي</string>
-    <string name="dark_mode_desc">المظهر الداكن المريح للعين</string>
-    <string name="privacy_e2ee">التشفير التام (E2EE)</string>
-    <string name="privacy_desc">جميع الرسائل مشفرة وخاصة بالكامل</string>
-    <string name="storage_cache">التخزين والذاكرة المؤقتة</string>
-    <string name="clear_cache">مسح الذاكرة المؤقتة</string>
-    <string name="cache_cleared">تم مسح الكاش بنجاح</string>
-    <string name="developer_contact">تواصل مع المطور</string>
-    <string name="email_label">البريد الإلكتروني: retwan.tech@gmail.com</string>
-    <string name="facebook_label">فيسبوك: Ridwan Almasouri</string>
-    <string name="app_version">الإصدار 1.0.0 (نسخة متجر APKPure)</string>
-    <string name="logout">تسجيل الخروج</string>
+    <string name="privacy_security">الخصوصية والأمان والتشفير</string>
+    <string name="storage_data">التخزين والبيانات</string>
+    <string name="contact_developer">تواصل مع المطور</string>
+    <string name="email_contact">البريد الإلكتروني</string>
+    <string name="no_email_app">لم يتم العثور على تطبيق بريد</string>
+    <string name="facebook_contact">فيسبوك (Facebook)</string>
+    <string name="link_open_failed">تعذر فتح الرابط</string>
+    <string name="close">إغلاق</string>
 
-    <!-- Notifications -->
-    <string name="notification_channel_name">رسائل نوفا شات</string>
-    <string name="notification_channel_desc">تنبيهات فورية بالرسائل الواردة</string>
-    <string name="new_message_notification">لديك رسالة جديدة</string>
-    <string name="appearance">المظهر</string>
+    <!-- Privacy & Security Dialog -->
+    <string name="privacy_security_title">الخصوصية والأمان</string>
+    <string name="privacy_security_desc">محادثاتك محمية ومشفرة من طرف إلى طرف (E2EE) تلقائياً.</string>
+    <string name="lock_app_title">قفل التطبيق بالبصمة / الرمز</string>
+    <string name="lock_enabled_toast">تم تفعيل القفل بنجاح</string>
+    <string name="lock_disabled_toast">تم إلغاء قفل التطبيق</string>
+    <string name="hide_online_status">إخفاء حالة الاتصال وآخر ظهور</string>
+    <string name="read_receipts">مؤشرات قراءة الرسائل (صحين)</string>
+    <string name="e2ee_active_unlocked">تشفير تام E2EE • غير مفعّل</string>
+    <string name="e2ee_active_locked">مفعّل (قفل التطبيق)</string>
+
+    <!-- Storage & Data Dialog -->
+    <string name="storage_data_title">التخزين والبيانات</string>
+    <string name="cache_memory">الذاكرة المؤقتة (Cache)</string>
+    <string name="clear_cache_action">مسح الكاش</string>
+    <string name="cache_cleared_toast">تم تنظيف الذاكرة المؤقتة بنجاح</string>
+    <string name="auto_download_media">التنزيل التلقائي للوسائط</string>
+    <string name="download_wifi">تنزيل الوسائط عبر Wi-Fi تلقائياً</string>
+    <string name="download_mobile">تنزيل الوسائط عبر بيانات الهاتف</string>
+    <string name="data_saver_mode">وضع توفير استهلاك البيانات</string>
+    <string name="cache_prefix_label">الكاش: </string>
 </resources>

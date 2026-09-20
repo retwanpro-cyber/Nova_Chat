@@ -1,8 +1,11 @@
 package com.radwan.nova.ui.screens.home
 
+import com.radwan.nova.data.local.LanguageManager
+
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,6 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddComment
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -72,6 +77,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.radwan.nova.data.remote.RemoteMessage
 import com.radwan.nova.data.remote.RemoteProfile
@@ -79,6 +85,20 @@ import com.radwan.nova.data.remote.SupabaseManager
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
+
+fun parseImageModel(data: String?): Any? {
+    if (data.isNullOrBlank()) return null
+    return if (data.startsWith("data:image") && data.contains(",")) {
+        try {
+            val base64Str = data.substringAfter(",")
+            android.util.Base64.decode(base64Str, android.util.Base64.DEFAULT)
+        } catch (e: Exception) {
+            data
+        }
+    } else {
+        data
+    }
+}
 
 data class HomeConversation(
     val roomId: String,
@@ -123,8 +143,21 @@ fun HomeScreen(
     var menuExpanded by remember { mutableStateOf(false) }
     var showNewChatDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-    var searchResults by remember { mutableStateOf<List<RemoteProfile>>(emptyList()) }
-    var isSearching by remember { mutableStateOf(false) }
+
+    // تحديث حالة الاتصال للمستخدم الحالي إلى متصل فور الدخول للشاشة
+    LaunchedEffect(currentUserId) {
+        if (currentUserId.isNotBlank()) {
+            try {
+                SupabaseManager.postgrest["profiles"].update(
+                    mapOf("is_online" to true)
+                ) {
+                    filter { eq("id", currentUserId) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     BackHandler(enabled = isSelectionMode) {
         isSelectionMode = false
@@ -221,7 +254,7 @@ fun HomeScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "تم تحديد ${selectedChatIds.size}",
+                            text = LanguageManager.getString("selected_count") + " " + selectedChatIds.size,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
                             fontSize = 17.sp
@@ -272,7 +305,7 @@ fun HomeScreen(
                                 modifier = Modifier.background(Color(0xFF1E293B))
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("الإعدادات", color = Color.White) },
+                                    text = { Text(LanguageManager.getString("settings_title"), color = Color.White) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Settings, contentDescription = null, tint = Color(0xFF60A5FA))
                                     },
@@ -282,7 +315,7 @@ fun HomeScreen(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("تسجيل الخروج", color = Color(0xFFEF4444)) },
+                                    text = { Text(LanguageManager.getString("logout"), color = Color(0xFFEF4444)) },
                                     leadingIcon = {
                                         Icon(Icons.Default.ExitToApp, contentDescription = null, tint = Color(0xFFEF4444))
                                     },
@@ -290,6 +323,14 @@ fun HomeScreen(
                                         menuExpanded = false
                                         scope.launch {
                                             try {
+                                                // تحويل حالة الاتصال إلى false قبل تسجيل الخروج
+                                                if (currentUserId.isNotBlank()) {
+                                                    SupabaseManager.postgrest["profiles"].update(
+                                                        mapOf("is_online" to false)
+                                                    ) {
+                                                        filter { eq("id", currentUserId) }
+                                                    }
+                                                }
                                                 SupabaseManager.auth.signOut()
                                             } catch (e: Exception) {
                                                 e.printStackTrace()
@@ -341,14 +382,14 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "لا توجد محادثات حتى الآن",
+                        text = LanguageManager.getString("no_chats_yet"),
                         color = Color(0xFF94A3B8),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "اضغط على زر (+) لبدء محادثة جديدة",
+                        text = LanguageManager.getString("start_new_chat_hint"),
                         color = Color(0xFF64748B),
                         fontSize = 13.sp
                     )
@@ -427,9 +468,10 @@ fun HomeScreen(
                                             shape = CircleShape,
                                             color = Color(0xFF2563EB).copy(alpha = 0.8f)
                                         ) {
-                                            if (!conv.otherUserAvatar.isNullOrBlank()) {
+                                            val avatar = parseImageModel(conv.otherUserAvatar)
+                                            if (avatar != null) {
                                                 AsyncImage(
-                                                    model = conv.otherUserAvatar,
+                                                    model = avatar,
                                                     contentDescription = null,
                                                     modifier = Modifier.fillMaxSize().clip(CircleShape),
                                                     contentScale = ContentScale.Crop
@@ -474,7 +516,7 @@ fun HomeScreen(
                                         modifier = Modifier.padding(start = 8.dp)
                                     ) {
                                         Text(
-                                            text = "محدد",
+                                            text = LanguageManager.getString("selected_item"),
                                             color = Color(0xFF60A5FA),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
@@ -502,7 +544,7 @@ fun HomeScreen(
             },
             text = {
                 Text(
-                    text = "هل أنت متأكد من رغبتك في حذف ${selectedChatIds.size} محادثة؟",
+                    text = LanguageManager.getString("delete_confirm_msg"),
                     color = Color(0xFFCBD5E1)
                 )
             },
@@ -534,157 +576,334 @@ fun HomeScreen(
                         isSelectionMode = false
                         selectedChatIds = emptySet()
                         showDeleteConfirmDialog = false
-                        Toast.makeText(context, "تم حذف المحادثة بنجاح", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, LanguageManager.getString("chat_deleted_success"), Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
                 ) {
-                    Text("حذف", color = Color.White)
+                    Text(LanguageManager.getString("delete_action"), color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("إلغاء", color = Color(0xFF94A3B8))
+                    Text(LanguageManager.getString("cancel"), color = Color(0xFF94A3B8))
                 }
             }
         )
     }
 
+    // =======================================================
+    // شاشة جهات الاتصال والمحادثة الجديدة الكاملة (Full Screen)
+    // =======================================================
     if (showNewChatDialog) {
-        Dialog(onDismissRequest = { showNewChatDialog = false }) {
+        var allUsers by remember { mutableStateOf<List<RemoteProfile>>(emptyList()) }
+        var isFetchingUsers by remember { mutableStateOf(true) }
+        var selectedFilterTab by remember { mutableStateOf(0) } // 0: المتصلون الآن, 1: غير المتصلين
+
+        LaunchedEffect(Unit) {
+            isFetchingUsers = true
+            try {
+                val users = SupabaseManager.postgrest["profiles"]
+                    .select {
+                        filter {
+                            neq("id", currentUserId)
+                        }
+                    }.decodeList<RemoteProfile>()
+                allUsers = users
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isFetchingUsers = false
+            }
+        }
+
+        val filteredUsers = remember(allUsers, selectedFilterTab, searchQuery) {
+            allUsers.filter { user ->
+                val matchesTab = when (selectedFilterTab) {
+                    0 -> user.is_online
+                    else -> !user.is_online
+                }
+                val matchesSearch = if (searchQuery.isBlank()) true else {
+                    user.full_name.contains(searchQuery, ignoreCase = true) ||
+                    user.username.contains(searchQuery, ignoreCase = true)
+                }
+                matchesTab && matchesSearch
+            }
+        }
+
+        val onlineCount = remember(allUsers) { allUsers.count { it.is_online } }
+        val offlineCount = remember(allUsers) { allUsers.count { !it.is_online } }
+
+        Dialog(
+            onDismissRequest = {
+                showNewChatDialog = false
+                searchQuery = ""
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color(0xFF1E293B),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                modifier = Modifier.fillMaxSize(),
+                color = Color(0xFF0F172A)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "بدء محادثة جديدة",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = {
-                            searchQuery = it
-                            if (it.isNotBlank()) {
-                                isSearching = true
-                                scope.launch {
-                                    try {
-                                        val users = SupabaseManager.postgrest["profiles"]
-                                            .select {
-                                                filter {
-                                                    neq("id", currentUserId)
-                                                    ilike("username", "%$it%")
-                                                }
-                                            }.decodeList<RemoteProfile>()
-                                        searchResults = users
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    } finally {
-                                        isSearching = false
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Column {
+                                    Text(
+                                        text = LanguageManager.getString("contacts"),
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "${allUsers.size} " + LanguageManager.getString("registered_contacts"),
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF94A3B8)
+                                    )
+                                }
+                            },
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    showNewChatDialog = false
+                                    searchQuery = ""
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowBack,
+                                        contentDescription = "رجوع",
+                                        tint = Color.White
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = Color(0xFF0F172A)
+                            )
+                        )
+                    },
+                    containerColor = Color(0xFF0B1120)
+                ) { innerPadding ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
+                        // شريط البحث
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { Text(LanguageManager.getString("search_contacts_hint"), color = Color(0xFF64748B), fontSize = 14.sp) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF60A5FA), modifier = Modifier.size(20.dp)) },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Close, contentDescription = "مسح", tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp))
                                     }
                                 }
-                            } else {
-                                searchResults = emptyList()
-                            }
-                        },
-                        placeholder = { Text("ابحث باسم المستخدم...", color = Color(0xFF64748B)) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF60A5FA)) },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (isSearching) {
-                        CircularProgressIndicator(color = Color(0xFF2563EB), modifier = Modifier.size(28.dp))
-                    } else {
-                        LazyColumn(
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF2563EB),
+                                unfocusedBorderColor = Color(0xFF334155),
+                                focusedContainerColor = Color(0xFF1E293B),
+                                unfocusedContainerColor = Color(0xFF1E293B),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(220.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+
+                        // الزرّان: المتصلون الآن | غير المتصلين
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            items(searchResults) { user ->
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            showNewChatDialog = false
-                                            val name = user.full_name.ifBlank { user.username }
-                                            val currentDeleted = getDeletedChats(context).toMutableSet()
-                                            if (currentDeleted.remove(user.id)) {
-                                                context.getSharedPreferences("nova_home_prefs", Context.MODE_PRIVATE)
-                                                    .edit().putStringSet("deleted_chats", currentDeleted).apply()
-                                                deletedChatIds = currentDeleted
-                                            }
-                                            onChatClick(user.id, name)
-                                        },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFF0F172A)
+                            // زر المتصلين الآن
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedFilterTab = 0 },
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (selectedFilterTab == 0) Color(0xFF166534) else Color(0xFF1E293B),
+                                border = BorderStroke(1.dp, if (selectedFilterTab == 0) Color(0xFF22C55E) else Color(0xFF334155))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(10.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(Color(0xFF22C55E), CircleShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = LanguageManager.getString("online_tab") + " ($onlineCount)",
+                                        color = if (selectedFilterTab == 0) Color.White else Color(0xFF94A3B8),
+                                        fontWeight = if (selectedFilterTab == 0) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
+
+                            // زر غير المتصلين
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedFilterTab = 1 },
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (selectedFilterTab == 1) Color(0xFF1E3A8A) else Color(0xFF1E293B),
+                                border = BorderStroke(1.dp, if (selectedFilterTab == 1) Color(0xFF3B82F6) else Color(0xFF334155))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(Color(0xFF64748B), CircleShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = LanguageManager.getString("offline_tab") + " ($offlineCount)",
+                                        color = if (selectedFilterTab == 1) Color.White else Color(0xFF94A3B8),
+                                        fontWeight = if (selectedFilterTab == 1) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // عرض القائمة الفورية
+                        if (isFetchingUsers) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = Color(0xFF2563EB))
+                            }
+                        } else if (filteredUsers.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = if (selectedFilterTab == 0) Icons.Default.CheckCircle else Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = Color(0xFF475569),
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = if (selectedFilterTab == 0) "لا يوجد أعضاء متصلون حالياً" else "لا يوجد أعضاء في هذه القائمة",
+                                        color = Color(0xFF64748B),
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(filteredUsers) { user ->
+                                    val name = user.full_name.ifBlank { user.username }
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                showNewChatDialog = false
+                                                searchQuery = ""
+                                                val currentDeleted = getDeletedChats(context).toMutableSet()
+                                                if (currentDeleted.remove(user.id)) {
+                                                    context.getSharedPreferences("nova_home_prefs", Context.MODE_PRIVATE)
+                                                        .edit().putStringSet("deleted_chats", currentDeleted).apply()
+                                                    deletedChatIds = currentDeleted
+                                                }
+                                                onChatClick(user.id, name)
+                                            },
+                                        shape = RoundedCornerShape(14.dp),
+                                        color = Color(0xFF1E293B)
                                     ) {
-                                        Surface(
-                                            modifier = Modifier.size(40.dp),
-                                            shape = CircleShape,
-                                            color = Color(0xFF2563EB)
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            if (!user.avatar_url.isNullOrBlank()) {
-                                                AsyncImage(
-                                                    model = user.avatar_url,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                                    contentScale = ContentScale.Crop
-                                                )
-                                            } else {
-                                                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.padding(8.dp))
+                                            Box {
+                                                Surface(
+                                                    modifier = Modifier.size(48.dp),
+                                                    shape = CircleShape,
+                                                    color = Color(0xFF2563EB)
+                                                ) {
+                                                    val avatarModel = parseImageModel(user.avatar_url)
+                                                    if (avatarModel != null) {
+                                                        AsyncImage(
+                                                            model = avatarModel,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                                            contentScale = ContentScale.Crop
+                                                        )
+                                                    } else {
+                                                        Icon(
+                                                            Icons.Default.Person,
+                                                            contentDescription = null,
+                                                            tint = Color.White,
+                                                            modifier = Modifier.padding(10.dp)
+                                                        )
+                                                    }
+                                                }
+                                                if (user.is_online) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(14.dp)
+                                                            .align(Alignment.BottomEnd)
+                                                            .background(Color(0xFF22C55E), CircleShape)
+                                                            .border(2.dp, Color(0xFF1E293B), CircleShape)
+                                                    )
+                                                }
                                             }
-                                        }
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Column {
-                                            Text(
-                                                text = user.full_name.ifBlank { user.username },
-                                                color = Color.White,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp
-                                            )
-                                            Text(
-                                                text = "@${user.username}",
-                                                color = Color(0xFF60A5FA),
-                                                fontSize = 12.sp
-                                            )
+
+                                            Spacer(modifier = Modifier.width(14.dp))
+
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = name,
+                                                    color = Color.White,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 15.sp
+                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Text(
+                                                    text = "@${user.username}",
+                                                    color = Color(0xFF60A5FA),
+                                                    fontSize = 12.sp
+                                                )
+                                                if (!user.bio.isNullOrBlank()) {
+                                                    Spacer(modifier = Modifier.height(2.dp))
+                                                    Text(
+                                                        text = user.bio,
+                                                        color = Color(0xFF94A3B8),
+                                                        fontSize = 12.sp,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    TextButton(
-                        onClick = { showNewChatDialog = false },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("إغلاق", color = Color(0xFF94A3B8))
                     }
                 }
             }
